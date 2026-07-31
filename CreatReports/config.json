@@ -1,0 +1,10 @@
+{
+  "employee": {
+    "lastName": "Иванов",
+    "firstName": "Иван",
+    "middleName": "Иванович",
+    "position": "Инженер"
+  },
+  "documentTitle": "Протокол обучения пользователей №1",
+  "csvFilePath": "/Info.csv"
+}
