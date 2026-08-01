@@ -31,6 +31,11 @@ namespace CreatReports
             {
                 _pathOutput = Path.GetDirectoryName(_pathTemplate);
             }
+            else
+            {
+                if (!Directory.Exists(Path.GetDirectoryName(_pathOutput)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(_pathOutput));
+            }
 
             try
             {
