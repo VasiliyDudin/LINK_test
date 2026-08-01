@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="justpass.client/justpass.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="JustPass.Server/JustPass.Server.csproj" />
+</Solution>
