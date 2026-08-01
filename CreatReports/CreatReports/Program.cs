@@ -9,7 +9,7 @@ internal class Program
 {
     const string _info = "Данная программа предназначена для создания отчетности.";
     const string _startInfo = "Для начала использования введите полный путь к конфигурационному файлу в формате JSON :";
-    const string _nameTemplate = "\\SourceTemplate.docx";
+    const string _nameTemplate = "SourceTemplate.docx";
 
     private static async Task Main(string[] args)
     {
@@ -63,7 +63,7 @@ internal class Program
 
             path = Console.ReadLine();
 
-            CreatorWord creator = new CreatorWord(Path.GetDirectoryName(input) + _nameTemplate, path, info, students); //Предполагаем, что шаблон лежит по тому же пути где расположен файл конфигурации с неизменяемым названием - SourceTemplate.docx
+            CreatorWord creator = new CreatorWord(Path.GetDirectoryName(input) + "\\Templates\\" + _nameTemplate, path, info, students); //Предполагаем, что шаблон лежит по тому же пути где расположен файл конфигурации с неизменяемым названием - SourceTemplate.docx
 
             if (!await creator.GenerateDocumentAsync())
             {
