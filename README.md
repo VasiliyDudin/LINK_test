@@ -93,11 +93,10 @@ npm run dev
 
 | Метод | Эндпоинт | Описание |
 |-------|----------|----------|
-| **GET** | `/api/pass` | Получить список всех сгенерированных паролей |
-| **GET** | `/api/pass/{id}` | Получить пароль по ID |
-| **POST** | `/api/pass` | Сгенерировать новый пароль |
-| **PUT** | `/api/pass/{id}` | Полное обновление пароля |
-| **DELETE** | `/api/pass/{id}` | Удалить пароль из истории |
+| **POST** | `/api/Pass/Generate` | Генерация пароля |
+| **GET** | `/api/Pass/GetHistory` | Получение истории |
+| **DELETE** | `/api/Pass/ClearHistory` | Очистка истории |
+| **POST** | `/api/Pass/Safety` | Оценка надежности пароля |
 
 ---
 
@@ -142,10 +141,7 @@ npm run dev
 Запрос на генерацию пароля.
 ```json
 {
-  "length": 12,
-  "includeNumbers": true,
-  "includeSymbols": true,
-  "includeUppercase": true
+  "LengthPwd": 8
 }
 ```
 
@@ -153,10 +149,10 @@ npm run dev
 Ответ сервера с паролем.
 ```json
 {
-  "id": "uuid",
-  "password": "RXEksi3J",
-  "strength": "Weak",
-  "createdAt": "2026-08-01T20:44:50Z"
+  "ID": "uuid",
+  "Pwd": "RXEksi3J",
+  "SafetyPwd": 8,
+  "DateGenerated": "2026-08-01T20:44:50Z"
 }
 ```
 
@@ -165,8 +161,8 @@ npm run dev
 ```json
 {
   "items": [
-    { "id": 1, "password": "RXEksi3J", "strength": "Weak" },
-    { "id": 2, "password": "B@bBM90", "strength": "Excellent" }
+    { "ID": 1, "Pwd": "RXEksi3J", "SafetyPwd": 8, dateGenerated: "2026-08-01T18:50:17.2190931Z" },
+    { "ID": 2, "Pwd": "B@bBM90", "SafetyPwd": 6, dateGenerated: "2026-08-01T18:51:14.2190931Z" }
   ]
 }
 ```
