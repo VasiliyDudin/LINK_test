@@ -1,0 +1,6 @@
+@JustPass.Server_HostAddress = http://localhost:7227
+
+GET {{JustPass.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
