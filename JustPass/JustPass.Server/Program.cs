@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddScoped<IServer, Server>();
+builder.Services.AddSingleton<IServer, Server>();
 builder.Services.AddEndpointsApiExplorer();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen(c =>

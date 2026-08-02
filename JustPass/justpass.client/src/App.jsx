@@ -15,8 +15,8 @@ function App() {
 
     const loadHistory = async () => {
         try {
-            console.log(`Загрузка истории: ${API_BASE_URL}/api/Pass/history`);
-            const response = await fetch(`${API_BASE_URL}/api/Pass/history`);
+            console.log(`Загрузка истории: ${API_BASE_URL}/api/Pass/gethistory`);
+            const response = await fetch(`${API_BASE_URL}/api/Pass/gethistory`);
             if (response.ok) {
                 const data = await response.json();
                 console.log('Загружено записей:', data.length);
@@ -44,7 +44,7 @@ function App() {
 
     const clearHistory = async () => {
         try {
-            await fetch(`${API_BASE_URL}/api/Pass/history`, {
+            await fetch(`${API_BASE_URL}/api/Pass/clearhistory`, {
                 method: 'DELETE'
             });
             setPasswords([]);
