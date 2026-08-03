@@ -1,6 +1,9 @@
 ﻿using CreatReports.CSV;
 using CreatReports.Interfaces;
 using CreatReports.JSON;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
 
@@ -8,7 +11,6 @@ namespace CreatReports
 {
     internal class CreatorWord : ICreator
     {
-        static int _numberDoc = -1; //Если после генерации тек. документа пользователь продолжает работу с программой инкрементируем данное значение
         string? _pathTemplate, _pathOutput;
         JSONFileInfo _info;
         List<StudentInfo> _students;
@@ -59,11 +61,51 @@ namespace CreatReports
 
         public void ReplacePlaceholders(DocX document)
         {
-            document.ReplaceText("{DocumentTitle}", GetFullTitle(_info.DocumentTitle));
+            document.ReplaceText("{DocumentTitle}", _info.DocumentTitle);
             document.ReplaceText("{LastName}", _info.Employee.LastName);
             document.ReplaceText("{FirstName}", _info.Employee.FirstName.ToUpper().Substring(0,1)); //т.к. требуется первая буква имени
             document.ReplaceText("{MiddleName}", _info.Employee.MiddleName.ToUpper().Substring(0, 1));
             document.ReplaceText("{Position}", _info.Employee.Position);
+        }
+
+        public async Task<bool> SetIncrDocumentNumberAsync(string pathConf)
+        {
+            string docNumb = string.Empty;
+            string title = _info.DocumentTitle;
+
+            if(!title.Contains('№'))
+                return false;
+
+            string numbTitle = title.Substring(title.LastIndexOf(' ')).Trim();
+            string subTitle = title.Substring(0, title.LastIndexOf('№') + 1);
+
+            var match = Regex.Match(numbTitle, @"\d+");
+
+            docNumb = match.Value;
+
+            if (string.IsNullOrWhiteSpace(docNumb) || !int.TryParse(docNumb, out int number))
+                return false;
+
+            _info.DocumentTitle = subTitle + ++number;
+
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
+
+                string json = JsonSerializer.Serialize(_info, options);
+                await File.WriteAllTextAsync(pathConf, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Исключение - {ex.Message}");
+                return false;
+            }
+
+            return true;
         }
 
         public void FillTable(DocX document)
@@ -84,24 +126,6 @@ namespace CreatReports
             }
 
             table.RemoveRow(removeIndx);
-        }
-
-        public string GetFullTitle(string title)
-        {
-            string numb = title.Substring(title.LastIndexOf(' ') + 2);
-
-            if (string.IsNullOrWhiteSpace(numb) || !int.TryParse(numb, out int number))
-                return title;
-                
-            if( _numberDoc < 0)
-            {
-                _numberDoc = number;
-                return title;
-            }
-
-            string fullTitile = title.Substring(0, title.LastIndexOf(numb));
-
-            return fullTitile + (++_numberDoc).ToString();
         }
     }
 }

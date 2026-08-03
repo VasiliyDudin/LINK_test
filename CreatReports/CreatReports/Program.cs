@@ -9,12 +9,13 @@ internal class Program
 {
     const string _info = "Данная программа предназначена для создания отчетности.";
     const string _startInfo = "Для начала использования введите полный путь к конфигурационному файлу в формате JSON :";
+    const string _folderTemplate = "Templates";
     const string _nameTemplate = "SourceTemplate.docx";
 
     private static async Task Main(string[] args)
     {
         bool isRun = true;
-        string? input = string.Empty, path = string.Empty;
+        string? pathCSV = string.Empty, pathConf = string.Empty;
         List<StudentInfo> students = new List<StudentInfo>();
 
         Console.WriteLine(_info);
@@ -22,33 +23,33 @@ internal class Program
         while (isRun)
         {
             Console.WriteLine(_startInfo);
-            input = Console.ReadLine();
+            pathConf = Console.ReadLine();
 
-            if (string.IsNullOrWhiteSpace(input))
+            if (string.IsNullOrWhiteSpace(pathConf))
             {
                 Console.WriteLine(Errors.GetMessage(Errors.Code.InvalidInput));
                 continue;
             }
 
-            if (!File.Exists(input))
+            if (!File.Exists(pathConf))
             {
-                Console.WriteLine(Errors.GetMessage(Errors.Code.FileNotFound) + $"\r\n{input}");
+                Console.WriteLine(Errors.GetMessage(Errors.Code.FileNotFound) + $"\r\n{pathConf}");
                 isRun = false;
                 continue;
             }
 
-            JSONFileInfo info = await GetFileInfoFromJSONAsync(input); //Получаем данные из JSON файла конфигурации
+            JSONFileInfo info = await GetFileInfoFromJSONAsync(pathConf); //Получаем данные из JSON файла конфигурации
             if (!info.CheckValues())
             {
-                Console.WriteLine(Errors.GetMessage(Errors.Code.JSONError) + $"\r\n{input}");
+                Console.WriteLine(Errors.GetMessage(Errors.Code.JSONError) + $"\r\n{pathConf}");
                 isRun = false;
                 continue;
             }
 
-            Console.WriteLine($"\r\nDeserialize файла - {input} прошла успешно !");
+            Console.WriteLine($"\r\nDeserialize файла - {pathConf} прошла успешно !");
 
-            path = Path.GetDirectoryName(input) + info.CsvFilePath.Replace('/', '\\'); //Предполагаем, что Csv файла расположен относительно директории файла конфигурации
-            students = await GetStudentsFromCsvAsync(path); //Получаем данные из Csv файла
+            pathCSV = Path.GetDirectoryName(pathConf) + info.CsvFilePath.Replace('/', '\\'); //Предполагаем, что Csv файла расположен относительно директории файла конфигурации
+            students = await GetStudentsFromCsvAsync(pathCSV); //Получаем данные из Csv файла
 
             if (students == null || students.Count == 0)
             {
@@ -61,9 +62,9 @@ internal class Program
             Console.WriteLine($"\r\nЗагрузка данных из файла - {info.CsvFilePath} прошла успешно !");
             Console.WriteLine("Введите полный путь с названием, куда нужно сохранить сгенерированный файл :");
 
-            path = Console.ReadLine();
+            pathCSV = Console.ReadLine();
 
-            CreatorWord creator = new CreatorWord(Path.GetDirectoryName(input) + "\\Templates\\" + _nameTemplate, path, info, students); //Предполагаем, что шаблон лежит по тому же пути где расположен файл конфигурации с неизменяемым названием - SourceTemplate.docx
+            CreatorWord creator = new CreatorWord(Path.GetDirectoryName(pathConf) + "\\" + _folderTemplate + "\\" + _nameTemplate, pathCSV, info, students); //Предполагаем, что шаблон лежит по тому же пути где расположен файл конфигурации с неизменяемым названием - SourceTemplate.docx
 
             if (!await creator.GenerateDocumentAsync())
             {
@@ -71,12 +72,20 @@ internal class Program
                 continue;
             }
 
-            Console.WriteLine($"\r\nНовый файла - {path} сгенерирован успешно !");
+            Console.WriteLine($"\r\nНовый файла - {pathCSV} сгенерирован успешно !");
 
             Console.Write("Для генерации еще одного документа нажмите - (Y) или любую клавишу для завершения работы : ");
-            input = Console.ReadLine();
 
-            isRun = input?.ToUpper() == "Y" ? true: false;
+            isRun = Console.ReadLine().ToUpper() == "Y" ? true: false;
+
+            if (isRun)
+            {
+                if (!await creator.SetIncrDocumentNumberAsync(pathConf))
+                {
+                    Console.WriteLine(Errors.GetMessage(Errors.Code.ConfigError) + "\r\n Работа с программой не может быть продолжена !");
+                    return;
+                }
+            }
         }
     }
 
