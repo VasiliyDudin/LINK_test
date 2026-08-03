@@ -14,7 +14,8 @@ namespace CreatReports
             ConnectionFailed = 3,
             JSONError = 4,
             CSVError = 5,
-            GenerateError = 6
+            GenerateError = 6,
+            ConfigError = 7
         }
 
         public static string GetMessage(Code code)
@@ -40,6 +41,9 @@ namespace CreatReports
                     break;
                 case Code.GenerateError:
                     result = "Ошибка !\r\nГенерации word файла.";
+                    break;
+                case Code.ConfigError:
+                    result = "Ошибка !\r\nВ файле конфигурации.";
                     break;
                 default:
                     result = "Неизвестный код ошибки.";
