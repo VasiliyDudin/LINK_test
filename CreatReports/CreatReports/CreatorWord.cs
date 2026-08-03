@@ -8,6 +8,7 @@ namespace CreatReports
 {
     internal class CreatorWord : ICreator
     {
+        static int _numberDoc = -1; //Если после генерации тек. документа пользователь продолжает работу с программой инкрементируем данное значение
         string? _pathTemplate, _pathOutput;
         JSONFileInfo _info;
         List<StudentInfo> _students;
@@ -58,7 +59,7 @@ namespace CreatReports
 
         public void ReplacePlaceholders(DocX document)
         {
-            document.ReplaceText("{DocumentTitle}", _info.DocumentTitle);
+            document.ReplaceText("{DocumentTitle}", GetFullTitle(_info.DocumentTitle));
             document.ReplaceText("{LastName}", _info.Employee.LastName);
             document.ReplaceText("{FirstName}", _info.Employee.FirstName.ToUpper().Substring(0,1)); //т.к. требуется первая буква имени
             document.ReplaceText("{MiddleName}", _info.Employee.MiddleName.ToUpper().Substring(0, 1));
@@ -83,6 +84,24 @@ namespace CreatReports
             }
 
             table.RemoveRow(removeIndx);
+        }
+
+        public string GetFullTitle(string title)
+        {
+            string numb = title.Substring(title.LastIndexOf(' ') + 2);
+
+            if (string.IsNullOrWhiteSpace(numb) || !int.TryParse(numb, out int number))
+                return title;
+                
+            if( _numberDoc < 0)
+            {
+                _numberDoc = number;
+                return title;
+            }
+
+            string fullTitile = title.Substring(0, title.LastIndexOf(numb));
+
+            return fullTitile + (++_numberDoc).ToString();
         }
     }
 }
