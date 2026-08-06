@@ -1,16 +1,39 @@
-using Microsoft.OpenApi;
 using JustPass.Server.Services;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Настройка CORS для разработки и Docker
+
+var isInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+
+if (isInContainer)
+{
+    builder.WebHost.UseUrls("http://*:80");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (isInContainer)
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            policy.WithOrigins(
+                      "https://localhost:55625",
+                      "http://localhost:55625",
+                      "https://localhost:7227",
+                      "http://localhost:7227"
+                  )
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -24,12 +47,6 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "JustPass.Server", Version = "v1" });
 });
 
-// Настройка порта для Docker
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
-{
-    builder.WebHost.UseUrls("http://*:80");
-}
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -41,7 +58,15 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+if (isInContainer)
+{
+    app.Use(async (context, next) =>
+    {
+        context.Request.Scheme = "http";
+        await next();
+    });
+}
+else
 {
     app.UseHttpsRedirection();
 }

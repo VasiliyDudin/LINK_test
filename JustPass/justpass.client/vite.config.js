@@ -15,11 +15,9 @@ const certificateName = "justpass.client";
 const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
 
-// Проверяем, запущена ли сборка (build) или разработка (serve)
 const isBuild = process.argv.includes('build');
 
 if (!isBuild) {
-    // Только при разработке создаём сертификат
     if (!fs.existsSync(baseFolder)) {
         fs.mkdirSync(baseFolder, { recursive: true });
     }
@@ -39,10 +37,14 @@ if (!isBuild) {
     }
 }
 
-const target = env.ASPNETCORE_HTTPS_PORT ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}` :
-    env.ASPNETCORE_URLS ? env.ASPNETCORE_URLS.split(';')[0] : 'https://localhost:7227';
+const isDocker = process.env.DOTNET_RUNNING_IN_CONTAINER === 'true';
 
-// https://vitejs.dev/config/
+const target = isDocker
+    ? 'http://localhost:80'  // В Docker — сервер внутри слушает порт 80
+    : (env.ASPNETCORE_HTTPS_PORT
+        ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
+        : (env.ASPNETCORE_URLS ? env.ASPNETCORE_URLS.split(';')[0] : 'https://localhost:7227'));
+
 export default defineConfig({
     plugins: [plugin()],
     resolve: {
@@ -53,16 +55,15 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:7227', // или http://localhost:8080, если пробросили другой порт
+                target: target,
                 changeOrigin: true,
                 secure: false
             }
         },
         port: parseInt(env.DEV_SERVER_PORT || '55625'),
-        // HTTPS настраиваем только для разработки
         https: isBuild ? false : {
             key: fs.readFileSync(keyFilePath),
             cert: fs.readFileSync(certFilePath),
         }
     }
-})
+});
