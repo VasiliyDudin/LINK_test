@@ -18,6 +18,8 @@ internal class Program
         string? pathCSV = string.Empty, pathConf = string.Empty;
         List<StudentInfo> students = new List<StudentInfo>();
 
+        bool isInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"; //Для определения окружения
+
         Console.WriteLine(_info);
 
         while (isRun)
@@ -38,7 +40,7 @@ internal class Program
                 continue;
             }
 
-            JSONFileInfo info = await GetFileInfoFromJSONAsync(pathConf); //Получаем данные из JSON файла конфигурации
+            JSONFileInfo info = await GetFileInfoFromJSONAsync(pathConf);
             if (!info.CheckValues())
             {
                 Console.WriteLine(Errors.GetMessage(Errors.Code.JSONError) + $"\r\n{pathConf}");
@@ -48,15 +50,24 @@ internal class Program
 
             Console.WriteLine($"\r\nDeserialize файла - {pathConf} прошла успешно !");
 
-            pathCSV = Path.GetDirectoryName(pathConf) + info.CsvFilePath.Replace('/', '\\'); //Предполагаем, что Csv файла расположен относительно директории файла конфигурации
-            students = await GetStudentsFromCsvAsync(pathCSV); //Получаем данные из Csv файла
+
+            string? baseDir = Path.GetDirectoryName(pathConf);
+            if (isInContainer)
+            {
+                pathCSV = baseDir + "/" + info.CsvFilePath.TrimStart('/');
+            }
+            else
+            {
+                pathCSV = Path.GetDirectoryName(pathConf) + info.CsvFilePath.Replace('/', '\\');
+            }
+
+            students = await GetStudentsFromCsvAsync(pathCSV);
 
             if (students == null || students.Count == 0)
             {
                 Console.WriteLine(Errors.GetMessage(Errors.Code.CSVError) + $"\r\n{info.CsvFilePath}");
                 isRun = false;
                 continue;
-
             }
 
             Console.WriteLine($"\r\nЗагрузка данных из файла - {info.CsvFilePath} прошла успешно !");
@@ -64,7 +75,19 @@ internal class Program
 
             pathCSV = Console.ReadLine();
 
-            CreatorWord creator = new CreatorWord(Path.GetDirectoryName(pathConf) + "\\" + _folderTemplate + "\\" + _nameTemplate, pathCSV, info, students); //Предполагаем, что шаблон лежит по тому же пути где расположен файл конфигурации с неизменяемым названием - SourceTemplate.docx
+
+            string templatePath;
+            if (isInContainer)
+            {
+                // В Docker — шаблон лежит в /app/data/Templates/
+                templatePath = "/app/data/" + _folderTemplate + "/" + _nameTemplate;
+            }
+            else
+            {
+                templatePath = Path.GetDirectoryName(pathConf) + "\\" + _folderTemplate + "\\" + _nameTemplate;
+            }
+
+            CreatorWord creator = new CreatorWord(templatePath, pathCSV, info, students);
 
             if (!await creator.GenerateDocumentAsync())
             {
@@ -72,7 +95,7 @@ internal class Program
                 continue;
             }
 
-            Console.WriteLine($"\r\nНовый файла - {pathCSV} сгенерирован успешно !");
+            Console.WriteLine($"\r\nНовый файл - {pathCSV} сгенерирован успешно !");
 
             Console.Write("Для генерации еще одного документа нажмите - (Y) или любую клавишу для завершения работы : ");
 
