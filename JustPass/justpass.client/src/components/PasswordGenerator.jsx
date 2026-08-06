@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './PasswordGenerator.css';
 import { decodePassword } from '../utils/decoder';
 
-const API_BASE_URL = 'https://localhost:7227';
+const API_BASE_URL = 'http://localhost:7227';
 
 const PasswordGenerator = ({ onPasswordGenerated }) => {
     const [password, setPassword] = useState('');
@@ -18,7 +18,7 @@ const PasswordGenerator = ({ onPasswordGenerated }) => {
         try {
             const randomLength = Math.floor(Math.random() * (8 - 6 + 1)) + 6;
 
-            const response = await fetch(`${API_BASE_URL}/api/Pass/generate`, {
+            const response = await fetch('/api/Pass/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

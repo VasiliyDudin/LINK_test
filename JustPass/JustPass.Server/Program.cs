@@ -1,33 +1,37 @@
-using JustPass.Server.Services;
 using Microsoft.OpenApi;
+using JustPass.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Настройка CORS для разработки и Docker
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("https://localhost:55625", "http://localhost:55625")
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-// Add services to the container.
-
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSingleton<IServer, Server>();
 builder.Services.AddEndpointsApiExplorer();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "JustPass.Server", Version = "v1" });
 });
 
+// Настройка порта для Docker
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+{
+    builder.WebHost.UseUrls("http://*:80");
+}
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -37,9 +41,13 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+{
+    app.UseHttpsRedirection();
+}
 
+app.UseCors("AllowAll");
+app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();
